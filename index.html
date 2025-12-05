@@ -22,6 +22,7 @@
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --gold: #ffd700; /* NEW GOLD COLOR FOR PRO */
             --selected: #3b82f6;
             --modal-overlay: rgba(0, 0, 0, 0.85);
             
@@ -83,10 +84,12 @@
         .st-pending { background: var(--warning); color: #000; }
         .st-approved { background: var(--success); color: #fff; }
         .st-blocked { background: var(--danger); color: #fff; }
+        .st-pro { background: linear-gradient(135deg, #ffd700, #f59e0b); color: #000; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
 
         .action-btn { padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.75rem; margin-right: 5px; color: white; font-weight: bold; }
         .btn-approve { background: var(--success); }
         .btn-block { background: var(--danger); }
+        .btn-upgrade { background: var(--gold); color: black; }
 
         /* HEADER */
         .user-header-bar {
@@ -108,10 +111,17 @@
             margin-right:5px;
         }
         .live-on { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        
+        .pro-badge {
+            background: linear-gradient(135deg, #ffd700, #f59e0b);
+            color: black; padding: 2px 8px; border-radius: 4px;
+            font-size: 0.7rem; font-weight: 800; margin-left: 5px;
+            display: none; /* Hidden by default */
+        }
 
         /* TOGGLE */
         .toggle-container {
-            width: 130px; height: 36px;
+            width: 80px; height: 32px; /* Smaller toggle */
             border-radius: 50px;
             position: relative;
             cursor: pointer;
@@ -122,24 +132,19 @@
         }
         body:not(.light-theme) .toggle-container { background: #000000; border: 1px solid #333; }
         body:not(.light-theme) .toggle-knob { left: 4px; }
-        body:not(.light-theme) .toggle-label { right: 10px; text-align: right; color: white; }
         body:not(.light-theme) .icon-moon { display: block; }
         body:not(.light-theme) .icon-sun { display: none; }
-        body:not(.light-theme) .label-text::after { content: "NIGHT MODE"; }
 
         body.light-theme .toggle-container { background: #e2e8f0; border: 1px solid #cbd5e1; }
-        body.light-theme .toggle-knob { left: calc(100% - 32px); }
-        body.light-theme .toggle-label { left: 10px; text-align: left; color: #334155; }
+        body.light-theme .toggle-knob { left: calc(100% - 28px); }
         body.light-theme .icon-moon { display: none; }
         body.light-theme .icon-sun { display: block; }
-        body.light-theme .label-text::after { content: "DAY MODE"; }
 
         .toggle-knob {
-            width: 28px; height: 28px; background: white; border-radius: 50%; position: absolute; top: 3px;
+            width: 24px; height: 24px; background: white; border-radius: 50%; position: absolute; top: 3px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex; align-items: center; justify-content: center; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; font-size: 12px;
         }
-        .toggle-label { position: absolute; width: 80px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px; pointer-events: none; user-select: none; }
 
         .timer-badge {
             background: var(--warning); color: #fff; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.9rem;
@@ -176,6 +181,9 @@
         .ctrl-btn:active { transform: translateY(4px); box-shadow: none; }
         .btn-solo { background: #e0e7ff; color: #4338ca; }
         .btn-multi { background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; }
+        .btn-pay { background: linear-gradient(135deg, #ffd700, #b45309); color: black; animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
 
         /* LOBBY & QUIZ */
         .lobby-panel { background: var(--bg-card); border-radius: 24px; padding: 30px; text-align: center; margin-top: 20px; display: none; }
@@ -230,6 +238,9 @@
         .refresh-btn { background: var(--primary); border: none; color: white; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); transition: transform 0.2s; }
         .refresh-btn:active { transform: rotate(180deg) scale(0.95); }
 
+        .premium-locked-notice { padding: 20px; background: rgba(255, 215, 0, 0.1); border: 1px solid var(--gold); border-radius: 12px; color: var(--gold); font-weight: bold; margin-bottom: 20px; font-size: 0.9rem; }
+        .qr-placeholder { background: white; padding: 15px; border-radius: 12px; display: inline-block; margin: 15px 0; }
+
         @media (max-width: 600px) {
             .options-grid { grid-template-columns: 1fr; }
             .game-controls { grid-template-columns: 1fr; }
@@ -241,7 +252,7 @@
 
 <div class="user-header-bar">
     <div class="header-left">
-        <div style="font-weight:700;">👤 <span id="header-name">Guest</span></div>
+        <div style="font-weight:700;">👤 <span id="header-name">Guest</span><span class="pro-badge" id="pro-badge">PRO</span></div>
         <div style="font-size:0.8rem; display:flex; align-items:center;">
             <span class="live-indicator" id="live-dot"></span>
             <span id="conn-text">Connecting...</span>
@@ -255,7 +266,6 @@
                 <span class="icon-moon">🌙</span>
                 <span class="icon-sun">☀️</span>
             </div>
-            <div class="toggle-label"><span class="label-text"></span></div>
         </div>
     </div>
 </div>
@@ -345,6 +355,11 @@
     <div class="dashboard-card" id="dashboard" style="display:none;">
         <h1>SmartStudy Pro</h1>
         
+        <div id="free-tier-notice" class="premium-locked-notice" style="display:none;">
+            🔒 Free Version: Limited to 10 Questions. <br>
+            <span style="font-size:0.8rem; font-weight:normal; color:var(--text-main);">Upgrade to access full bank & questions.</span>
+        </div>
+
         <div class="subject-select-container">
             <select id="subject-select" class="subject-select" onchange="window.app.changeSubject(this.value)">
                 <option value="english">📚 English Vocab</option>
@@ -372,11 +387,36 @@
             <button class="ctrl-btn btn-multi" onclick="window.app.setupOnlineGame()">
                 <span style="font-size:1.5rem">⚔️</span><span>Multiplayer</span>
             </button>
+            <button class="ctrl-btn btn-pay" id="btn-upgrade-ui" onclick="window.app.showPaymentModal()" style="grid-column: span 2; display:none;">
+                <span style="font-size:1.5rem">🚀</span><span>Upgrade to PRO (₹99)</span>
+            </button>
         </div>
         
         <div style="margin-top:20px; display:flex; justify-content:center; gap:15px;">
             <button id="btn-admin-access" onclick="window.app.showAdminPanel()" style="background:none; border:none; color:var(--warning); display:none; font-weight:bold;">Admin Panel</button>
             <button onclick="window.app.logout()" style="background:none; border:none; color:var(--danger);">Logout</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="payment-modal">
+        <div class="modal-card">
+            <h2 style="color:var(--gold);">🚀 Upgrade to Pro</h2>
+            <p style="color:var(--text-sub);">Unlock unlimited questions, Full Question Bank access, and Priority support.</p>
+            
+            <div class="qr-placeholder">
+                <img id="upi-qr-img" src="" alt="Pay via UPI" width="180" height="180">
+            </div>
+            
+            <p style="font-size:1rem; font-weight:bold;">Amount: ₹99</p>
+            <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom:15px;">Scan with GPay, PhonePe, or Paytm</p>
+
+            <div class="form-group">
+                <label>Transaction ID / UTR Number (Required)</label>
+                <input type="text" id="pay-utr" class="form-input" placeholder="e.g. 324512345678">
+            </div>
+
+            <button class="ctrl-btn btn-upgrade" style="width:100%" onclick="window.app.submitPayment()">Submit for Verification</button>
+            <button onclick="document.getElementById('payment-modal').classList.remove('active')" style="margin-top:15px; background:none; border:none; color:var(--text-sub);">Cancel</button>
         </div>
     </div>
 
@@ -394,7 +434,7 @@
                     <option value="gs">General Studies</option>
                 </select>
                 <label>⏱️ Game Duration (Seconds)</label>
-                <input type="number" id="admin-timer-input" class="timer-input" value="250" min="30" max="600">
+                <input type="number" id="admin-timer-input" class="timer-input" value="250" min="30" max="600" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px;">
             </div>
             <button class="ctrl-btn btn-multi" style="width:100%" onclick="window.app.startOnlineRound()">START GAME</button>
         </div>
@@ -441,7 +481,8 @@
 <div class="developer-footer">© 2025 Developed by Rafique Ul Islam</div>
 
 <script>
-    // 2. DATA (Collapsed for brevity - Same as before)
+    // 1. DUMMY DATA (Normally this is your full list)
+    // IMPORTANT: In your real code, PASTE YOUR FULL DATA HERE
     const rawEnglish = `1. An area where animals are slaughtered for the food - Abattoir
 3. Act of giving up the throne - Abdication
 * To go away suddenly and secretly - Abscond
@@ -451,14 +492,43 @@
 7. Fear of great heights - Acrophobia
 8. Sharpness and accuracy of judgment - Acumen
 9. Living in air/existing above the ground - Aerial
-10. Concerned with beauty or the appreciation of beauty - Aesthetic`;
-    // ... (Use the full previous data variables: rawEnglish, rawCS, rawGS)
-    // NOTE: For brevity in this response, assume variables are populated. 
-    // IN REAL CODE, PASTE THE FULL TEXT DATA HERE.
-    const rawCS = `1. Any physical components of a computer system that we can see and touch is (a) Software (b) Peripheral device (c) hardware (d) CPU Answer: (c)`;
-    const rawGS = `The longest river in India is (a) Yamuna (b) Brahmaputra (c) Ganga (d) Godavari Answer: (c)`;
+10. Concerned with beauty or the appreciation of beauty - Aesthetic
+11. A person who belongs to a foreign country - Alien
+12. An allowance made to a wife by her husband when they are legally separated - Alimony`;
 
-    // 3. FIREBASE CONFIG
+    const rawCS = `1. Any physical components of a computer system that we can see and touch is (a) Software (b) Peripheral device (c) hardware (d) CPU Answer: (c)
+    2. Which of the following is an input device? (a) Monitor (b) Printer (c) Mouse (d) Speaker Answer: (c)
+    3. RAM stands for (a) Read Access Memory (b) Random Access Memory (c) Run Access Memory (d) None Answer: (b)
+    4. The brain of the computer is (a) Mouse (b) Keyboard (c) CPU (d) Monitor Answer: (c)
+    5. HTML stands for (a) Hyper Text Markup Language (b) High Text Markup Language (c) Hyper Tabular Markup Language (d) None Answer: (a)
+    6. 1 Byte is equal to (a) 4 bits (b) 8 bits (c) 16 bits (d) 32 bits Answer: (b)
+    7. Which is a volatile memory? (a) ROM (b) BIOS (c) RAM (d) Hard Disk Answer: (c)
+    8. The intersection of a row and a column is called (a) Data (b) Field (c) Cell (d) Equation Answer: (c)
+    9. WWW stands for (a) World Whole Web (b) Wide World Web (c) Web World Wide (d) World Wide Web Answer: (d)
+    10. Which is not an Operating System? (a) Windows (b) Linux (c) Oracle (d) DOS Answer: (c)
+    11. A computer virus is a (a) Hardware (b) Software (c) Bacteria (d) Freeware Answer: (b)`;
+
+    const rawGS = `1. The longest river in India is (a) Yamuna (b) Brahmaputra (c) Ganga (d) Godavari Answer: (c)
+    2. The capital of India is (a) Mumbai (b) Kolkata (c) New Delhi (d) Chennai Answer: (c)
+    3. Who wrote the National Anthem of India? (a) Bankim Chandra Chatterjee (b) Rabindranath Tagore (c) Subhash Chandra Bose (d) None Answer: (b)
+    4. The Pink City of India is (a) Jaipur (b) Udaipur (c) Jodhpur (d) Bikaner Answer: (a)
+    5. Which planet is known as the Red Planet? (a) Venus (b) Mars (c) Jupiter (d) Saturn Answer: (b)
+    6. Currency of Japan is (a) Yuan (b) Dollar (c) Yen (d) Ringgit Answer: (c)
+    7. Teacher's Day is celebrated on (a) 5th Sept (b) 2nd Oct (c) 14th Nov (d) 15th Aug Answer: (a)
+    8. Largest state in India by area (a) MP (b) UP (c) Rajasthan (d) Maharashtra Answer: (c)
+    9. Saffron is associated with which state/UT? (a) Himachal (b) J&K (c) Punjab (d) Kerala Answer: (b)
+    10. Wular lake is located in (a) Srinagar (b) Bandipora (c) Baramulla (d) Budgam Answer: (b)
+    11. Martand Sun Temple is in (a) Anantnag (b) Pulwama (c) Jammu (d) Katra Answer: (a)`;
+
+    // 2. CONFIGURATION - REPLACE WITH YOUR DETAILS
+    // ******************************************************
+    const UPI_CONFIG = {
+        vpa: "iamrafique-1@okhdfcbank",  // REPLACE THIS with your UPI ID
+        name: "Rafiq Ul Islam",      // REPLACE THIS with your Name
+        amount: "99.00"
+    };
+    // ******************************************************
+
     const firebaseConfig = {
       apiKey: "AIzaSyCOtV0i7nkCGO8JpmRD8YV9IU2RL8cYMgI",
       authDomain: "vocab-pro-b0542.firebaseapp.com",
@@ -484,28 +554,23 @@
         }
     } catch(e) { console.log(e); }
 
-    // 4. LOGIC
     function mulberry32(a) { return function() { var t = a += 0x6D2B79F5; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; } }
 
     window.app = {
-        data: { score: 0, xp: 0, history: {}, seen: [], apiKey: "AIzaSyDJvoeMlz4NWpV2FAR0TOSRPchkVQvQejA", name: "Guest", theme: 'dark', subject: 'english' },
+        data: { score: 0, xp: 0, history: {}, seen: [], apiKey: "AIzaSyDJvoeMlz4NWpV2FAR0TOSRPchkVQvQejA", name: "Guest", theme: 'dark', subject: 'english', premiumStatus: 'free' },
         englishBank: [], csBank: [], gsBank: [], currentBank: [],
         currentBatch: [], gameId: null, user: null, isHost: false, unsubscribe: null,
         heartbeatInterval: null, timerInterval: null, scoreRefreshInterval: null,
         mode: 'solo', timeLeft: 250, ADMIN_EMAIL: "admin@smartstudy.com",
 
         init() {
-            // Parse Data
             this.parseEnglish();
-            this.parseMCQ(window.rawCS || rawCS, 'cs'); // Fallback to const if undefined
-            this.parseMCQ(window.rawGS || rawGS, 'gs');
-            this.changeSubject('english');
-
-            // Theme
+            this.parseMCQ(rawCS, 'cs');
+            this.parseMCQ(rawGS, 'gs');
+            
             this.loadData();
             this.applyTheme();
 
-            // Auth Listener
             auth.onAuthStateChanged(u => {
                 if(u) {
                     this.user = u;
@@ -544,25 +609,21 @@
 
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
-                
-                // Set Admin Role if email matches
                 const role = (email === this.ADMIN_EMAIL) ? 'admin' : 'user';
                 const status = (role === 'admin') ? 'approved' : 'pending';
 
                 await db.collection('users').doc(cred.user.uid).set({
                     name, email, phone, age, gender, role, status,
+                    premiumStatus: 'free', // Default to free
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                // Auth Listener will handle redirection
             } catch(e) { alert(e.message); }
         },
 
         async login() {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            try {
-                await auth.signInWithEmailAndPassword(email, pass);
-            } catch(e) { alert(e.message); }
+            try { await auth.signInWithEmailAndPassword(email, pass); } catch(e) { alert(e.message); }
         },
 
         logout() { auth.signOut(); location.reload(); },
@@ -573,34 +634,78 @@
             
             const d = doc.data();
             this.data.name = d.name;
+            this.data.premiumStatus = d.premiumStatus || 'free'; // SYNC PREMIUM STATUS
             headerName.innerText = d.name;
 
+            // Show Pro Badge if applicable
+            if(this.data.premiumStatus === 'pro') {
+                document.getElementById('pro-badge').style.display = 'inline-block';
+                document.getElementById('free-tier-notice').style.display = 'none';
+                document.getElementById('btn-upgrade-ui').style.display = 'none';
+            } else {
+                document.getElementById('pro-badge').style.display = 'none';
+                document.getElementById('free-tier-notice').style.display = 'block';
+                document.getElementById('btn-upgrade-ui').style.display = 'grid';
+            }
+
             if (d.role === 'admin') {
-                document.getElementById('auth-ui').style.display = 'none';
-                document.getElementById('status-ui').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                document.getElementById('btn-admin-access').style.display = 'block'; // Show Admin Button
+                this.showDashboard(true);
             } 
             else if (d.status === 'approved') {
-                document.getElementById('auth-ui').style.display = 'none';
-                document.getElementById('status-ui').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
+                this.showDashboard(false);
             } 
             else if (d.status === 'pending') {
-                document.getElementById('auth-ui').style.display = 'none';
-                document.getElementById('status-ui').style.display = 'block';
-                document.getElementById('status-title').innerText = "Request Submitted";
-                document.getElementById('status-msg').innerText = "Please wait for Admin approval to access the game.";
+                this.showStatus('Request Submitted', 'Please wait for Admin approval to access the game.');
             } 
             else {
-                document.getElementById('auth-ui').style.display = 'none';
-                document.getElementById('status-ui').style.display = 'block';
-                document.getElementById('status-title').innerText = "Access Denied";
-                document.getElementById('status-msg').innerText = "Your account has been blocked by the Administrator.";
+                this.showStatus('Access Denied', 'Your account has been blocked.');
             }
+            this.changeSubject(this.data.subject); // Reset bank based on status
         },
 
-        // ADMIN PANEL FUNCTIONS
+        showDashboard(isAdmin) {
+            document.getElementById('auth-ui').style.display = 'none';
+            document.getElementById('status-ui').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            if(isAdmin) document.getElementById('btn-admin-access').style.display = 'block';
+        },
+
+        showStatus(title, msg) {
+            document.getElementById('auth-ui').style.display = 'none';
+            document.getElementById('status-ui').style.display = 'block';
+            document.getElementById('status-title').innerText = title;
+            document.getElementById('status-msg').innerText = msg;
+        },
+
+        // --- PAYMENT & PRO LOGIC ---
+
+        showPaymentModal() {
+            // Generate UPI QR Code URL
+            const upiUrl = `upi://pay?pa=${UPI_CONFIG.vpa}&pn=${encodeURIComponent(UPI_CONFIG.name)}&am=${UPI_CONFIG.amount}&cu=INR`;
+            // Generate QR Image using API
+            const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
+            
+            document.getElementById('upi-qr-img').src = qrApi;
+            document.getElementById('payment-modal').classList.add('active');
+        },
+
+        async submitPayment() {
+            const utr = document.getElementById('pay-utr').value;
+            if(!utr || utr.length < 4) return alert("Please enter a valid Transaction ID");
+
+            try {
+                await db.collection('users').doc(this.user.uid).update({
+                    premiumStatus: 'requested',
+                    transactionId: utr,
+                    paymentDate: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Payment submitted! Wait for Admin approval.");
+                document.getElementById('payment-modal').classList.remove('active');
+            } catch(e) { alert("Error: " + e.message); }
+        },
+
+        // --- ADMIN PANEL ---
+
         async showAdminPanel() {
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'block';
@@ -612,16 +717,28 @@
             snap.forEach(doc => {
                 const u = doc.data();
                 let statusClass = u.status === 'pending' ? 'st-pending' : (u.status === 'approved' ? 'st-approved' : 'st-blocked');
+                let actions = '';
+
+                // Login Approval Logic
+                if(u.status !== 'approved') actions += `<button class="action-btn btn-approve" onclick="window.app.updateStatus('${doc.id}', 'approved')">Approve Login</button>`;
+                if(u.status !== 'blocked') actions += `<button class="action-btn btn-block" onclick="window.app.updateStatus('${doc.id}', 'blocked')">Block</button>`;
+
+                // Payment Approval Logic
+                if(u.premiumStatus === 'requested') {
+                    actions += `<div style="margin-top:5px; border-top:1px solid #444; padding-top:5px;">
+                        <div style="font-size:0.7rem; color:#ffd700;">Paid? UTR: ${u.transactionId}</div>
+                        <button class="action-btn btn-upgrade" onclick="window.app.grantPremium('${doc.id}')">Confirm Payment</button>
+                    </div>`;
+                } else if(u.premiumStatus === 'pro') {
+                    actions += `<div style="margin-top:5px;"><span class="status-badge st-pro">PRO USER</span></div>`;
+                }
                 
                 tbody.innerHTML += `
                     <tr>
                         <td>${u.name}<br><span style="font-size:0.7rem; color:grey">${u.email}</span></td>
                         <td>${u.phone || '-'}</td>
                         <td><span class="status-badge ${statusClass}">${u.status.toUpperCase()}</span></td>
-                        <td>
-                            ${u.status !== 'approved' ? `<button class="action-btn btn-approve" onclick="window.app.updateStatus('${doc.id}', 'approved')">Approve</button>` : ''}
-                            ${u.status !== 'blocked' ? `<button class="action-btn btn-block" onclick="window.app.updateStatus('${doc.id}', 'blocked')">Block</button>` : ''}
-                        </td>
+                        <td>${actions}</td>
                     </tr>
                 `;
             });
@@ -630,13 +747,20 @@
         async updateStatus(uid, status) {
             if(confirm(`Set user to ${status}?`)) {
                 await db.collection('users').doc(uid).update({ status });
-                this.showAdminPanel(); // Refresh list
+                this.showAdminPanel();
             }
         },
 
-        // --- EXISTING GAME LOGIC PRESERVED BELOW ---
+        async grantPremium(uid) {
+            if(confirm("Confirm that you received ₹99 from this user?")) {
+                await db.collection('users').doc(uid).update({ premiumStatus: 'pro' });
+                this.showAdminPanel();
+            }
+        },
+
+        // --- GAME DATA PARSING ---
+
         parseEnglish() {
-            // (Previous Parsing Logic)
             if(typeof rawEnglish !== 'undefined') {
                 this.englishBank = rawEnglish.trim().split('\n').map(line => {
                     const parts = line.split(' - ');
@@ -646,14 +770,12 @@
             }
         },
         parseMCQ(text, type) {
-            // (Previous Logic)
             if(!text) return;
             const lines = text.split('\n').filter(l => l.trim().length > 0);
             const bank = lines.map(line => {
                 const regex = /^(.*?)\(a\)(.*?)\(b\)(.*?)\(c\)(.*?)\(d\)(.*?)Answer:\s*\(([a-d])\)/i;
                 const match = line.match(regex);
                 if (!match) return null;
-                const question = match[1].replace(/^\d+[\.\)]\s*/, '').trim();
                 const ansLetter = match[6].toLowerCase();
                 let correctText = "";
                 if(ansLetter==='a') correctText=match[2].trim();
@@ -661,7 +783,7 @@
                 else if(ansLetter==='c') correctText=match[4].trim();
                 else if(ansLetter==='d') correctText=match[5].trim();
                 
-                return { q: question, opts: [match[2].trim(), match[3].trim(), match[4].trim(), match[5].trim()], correct: correctText };
+                return { q: match[1].replace(/^\d+[\.\)]\s*/, '').trim(), opts: [match[2].trim(), match[3].trim(), match[4].trim(), match[5].trim()], correct: correctText };
             }).filter(x => x);
             if (type === 'cs') this.csBank = bank;
             if (type === 'gs') this.gsBank = bank;
@@ -672,11 +794,23 @@
             const el = document.getElementById('subject-select');
             if(el) el.value = subj;
             
-            if (subj === 'english') this.currentBank = this.englishBank;
-            else if (subj === 'cs') this.currentBank = this.csBank;
-            else if (subj === 'gs') this.currentBank = this.gsBank;
+            let fullBank = [];
+            if (subj === 'english') fullBank = this.englishBank;
+            else if (subj === 'cs') fullBank = this.csBank;
+            else if (subj === 'gs') fullBank = this.gsBank;
+
+            // *** LIMITATION LOGIC FOR FREE USERS ***
+            if (this.data.premiumStatus !== 'pro') {
+                this.currentBank = fullBank.slice(0, 10); // ONLY TAKE FIRST 10
+            } else {
+                this.currentBank = fullBank; // TAKE ALL
+            }
+            // ***************************************
+
             this.updateDashboard();
         },
+
+        // --- UTILS & THEME ---
 
         loadData() {
             const saved = localStorage.getItem('vm_final_stable_data');
@@ -684,7 +818,6 @@
             if(!this.data.seen) this.data.seen = []; 
         },
         saveData() { localStorage.setItem('vm_final_stable_data', JSON.stringify(this.data)); this.updateDashboard(); },
-        resetData() { if(confirm("Reset Data?")) { localStorage.removeItem('vm_final_stable_data'); location.reload(); } },
         
         toggleTheme() {
             this.data.theme = this.data.theme === 'dark' ? 'light' : 'dark';
@@ -692,19 +825,13 @@
             this.saveData();
         },
         applyTheme() {
-            const toggle = document.querySelector('.toggle-container');
-            if(this.data.theme === 'light') {
-                document.body.classList.add('light-theme');
-            } else {
-                document.body.classList.remove('light-theme');
-            }
+            if(this.data.theme === 'light') document.body.classList.add('light-theme');
+            else document.body.classList.remove('light-theme');
         },
 
-        quitToMenu() {
-            if(this.scoreRefreshInterval) clearInterval(this.scoreRefreshInterval);
-            // Just refresh to go back to dashboard check
-            location.reload(); 
-        },
+        quitToMenu() { location.reload(); },
+
+        // --- GAME PLAY LOGIC ---
 
         async hostChangeSubject(subj) {
             if (this.isHost && db && this.gameId) {
@@ -714,6 +841,7 @@
         },
 
         setupOnlineGame: async function() {
+            // PRO CHECK FOR MULTIPLAYER (OPTIONAL - CURRENTLY ALLOWED FOR ALL)
             if(!db) return; 
             this.gameId = Math.floor(Math.random()*900000)+100000;
             const seed = Math.random();
@@ -738,7 +866,9 @@
                 if (!snap.exists) return location.reload();
                 const d = snap.data();
                 
-                if (d.subject && d.subject !== this.data.subject) this.changeSubject(d.subject); 
+                if (d.subject && d.subject !== this.data.subject) {
+                    this.changeSubject(d.subject);
+                }
                 document.getElementById('lobby-subject-display').innerText = d.subject.toUpperCase();
                 
                 if (this.user && !d.players[this.user.uid]) {
@@ -816,13 +946,13 @@
             
             const rng = mulberry32(seed ? Math.floor(seed*10000) : Date.now());
             
-            let pool;
-            if (mode === 'solo') pool = this.getBatch(20, null); 
-            else pool = this.getBatch(20, seed); 
+            // USE this.currentBank WHICH IS ALREADY FILTERED BASED ON PRO STATUS
+            let available = [...this.currentBank];
+            const shuffled = available.map(v => ({ v, s: rng() })).sort((a,b)=>a.s-b.s).map(x=>x.v);
+            const pool = shuffled.slice(0, 20); // Max 20 questions per round
 
             this.currentBatch = pool.map((t, i) => {
                 if (this.data.subject === 'english') {
-                    // English Logic (Collapsed for brevity - Same as before)
                     const correctWord = t.word;
                     const cat = this.detectEnglishCategory(t.word, t.meaning);
                     let distractors = [];
@@ -852,13 +982,6 @@
             const w = word.toLowerCase();
             if (m.includes('killing') || w.endsWith('cide')) return 'killing';
             return null;
-        },
-
-        getBatch(count, seed) {
-            const rng = mulberry32(seed ? Math.floor(seed*10000) : Date.now());
-            let available = [...this.currentBank];
-            const shuffled = available.map(v => ({ v, s: rng() })).sort((a,b)=>a.s-b.s).map(x=>x.v);
-            return shuffled.slice(0, count);
         },
 
         startTimer(seconds) {
@@ -1048,12 +1171,10 @@
             document.getElementById('xp-bar').style.width = `${(this.data.xp%500)/5}%`;
             document.getElementById('xp-text').innerText = `${this.data.xp%500}/500`;
             document.getElementById('lvl-num').innerText = Math.floor(this.data.xp/500)+1;
-            let total = 0;
-            if(this.data.subject === 'english') total = this.englishBank.length;
-            else if(this.data.subject === 'cs') total = this.csBank.length;
-            else if(this.data.subject === 'gs') total = this.gsBank.length;
-            document.getElementById('seen-count').innerText = `${total}`;
-            document.getElementById('seen-count-box').innerText = total;
+            
+            // UPDATE COUNT BASED ON ACTIVE BANK
+            document.getElementById('seen-count').innerText = `${this.currentBank.length}`;
+            document.getElementById('seen-count-box').innerText = this.currentBank.length;
         },
 
         copyLink() { 
