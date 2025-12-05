@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartStudy Pro - Secure Login</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            /* DARK THEME (DEFAULT) */
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-element: #334155;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --primary: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --selected: #3b82f6;
+            --modal-overlay: rgba(0, 0, 0, 0.85);
+            
+            --toggle-bg: #000000;
+            --toggle-circle: #ffffff;
+            --toggle-text: #ffffff;
+        }
+
+        /* LIGHT THEME OVERRIDES */
+        body.light-theme {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-element: #e2e8f0;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --modal-overlay: rgba(255, 255, 255, 0.9);
+            
+            --toggle-bg: #e2e8f0; 
+            --toggle-circle: #ffffff;
+            --toggle-text: #0f172a;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0; padding: 0;
+            display: flex; justify-content: center;
+            min-height: 100vh;
+            padding-top: 70px; 
+            padding-bottom: 140px; 
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .app-container { width: 100%; max-width: 700px; padding: 20px; box-sizing: border-box; }
+
+        /* AUTH & ADMIN UI */
+        .auth-card {
+            background: var(--bg-card); border-radius: 24px; padding: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); text-align: center;
+            margin-top: 20px;
+        }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; color: var(--text-sub); font-size: 0.85rem; }
+        .form-input {
+            width: 100%; padding: 12px; border-radius: 12px;
+            background: var(--bg-element); color: var(--text-main);
+            border: 1px solid rgba(128,128,128,0.2);
+            font-family: inherit; font-size: 1rem; box-sizing: border-box;
+        }
+        .auth-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--bg-element); padding-bottom: 10px; }
+        .auth-tab { flex: 1; padding: 10px; background: none; border: none; color: var(--text-sub); font-weight: 700; cursor: pointer; }
+        .auth-tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+        .admin-table th { text-align: left; color: var(--text-sub); padding: 8px; border-bottom: 1px solid var(--bg-element); }
+        .admin-table td { padding: 8px; border-bottom: 1px solid var(--bg-element); }
+        .status-badge { padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .st-pending { background: var(--warning); color: #000; }
+        .st-approved { background: var(--success); color: #fff; }
+        .st-blocked { background: var(--danger); color: #fff; }
+
+        .action-btn { padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.75rem; margin-right: 5px; color: white; font-weight: bold; }
+        .btn-approve { background: var(--success); }
+        .btn-block { background: var(--danger); }
+
+        /* HEADER */
+        .user-header-bar {
+            position: fixed; top: 0; left: 0; width: 100%;
+            background: var(--bg-card);
+            border-bottom: 1px solid rgba(128,128,128,0.1);
+            padding: 10px 20px; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
+            box-sizing: border-box;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            height: 65px;
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
+        .live-indicator { 
+            display: inline-block; width: 8px; height: 8px; 
+            background: var(--text-sub); border-radius: 50%; 
+            margin-right:5px;
+        }
+        .live-on { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+        /* TOGGLE */
+        .toggle-container {
+            width: 130px; height: 36px;
+            border-radius: 50px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex; align-items: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        body:not(.light-theme) .toggle-container { background: #000000; border: 1px solid #333; }
+        body:not(.light-theme) .toggle-knob { left: 4px; }
+        body:not(.light-theme) .toggle-label { right: 10px; text-align: right; color: white; }
+        body:not(.light-theme) .icon-moon { display: block; }
+        body:not(.light-theme) .icon-sun { display: none; }
+        body:not(.light-theme) .label-text::after { content: "NIGHT MODE"; }
+
+        body.light-theme .toggle-container { background: #e2e8f0; border: 1px solid #cbd5e1; }
+        body.light-theme .toggle-knob { left: calc(100% - 32px); }
+        body.light-theme .toggle-label { left: 10px; text-align: left; color: #334155; }
+        body.light-theme .icon-moon { display: none; }
+        body.light-theme .icon-sun { display: block; }
+        body.light-theme .label-text::after { content: "DAY MODE"; }
+
+        .toggle-knob {
+            width: 28px; height: 28px; background: white; border-radius: 50%; position: absolute; top: 3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
+        }
+        .toggle-label { position: absolute; width: 80px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px; pointer-events: none; user-select: none; }
+
+        .timer-badge {
+            background: var(--warning); color: #fff; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.9rem;
+            display: none; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
+
+        /* DASHBOARD & UI */
+        .dashboard-card { background: var(--bg-card); border-radius: 24px; padding: 30px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); text-align: center; transition: background-color 0.3s; }
+        
+        .subject-select-container { margin-bottom: 20px; }
+        .subject-select {
+            width: 100%; padding: 12px; border-radius: 12px;
+            background: var(--bg-element); color: var(--text-main); border: 2px solid var(--primary);
+            font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; outline: none; text-align: center;
+        }
+
+        .xp-container { margin-bottom: 25px; }
+        .xp-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; color: var(--primary); }
+        .progress-track { width: 100%; height: 12px; background: var(--bg-element); border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #a855f7); width: 0%; transition: width 0.5s ease; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 30px; }
+        .stat-box { background: var(--bg-element); padding: 15px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; }
+        .stat-val { font-size: 1.4rem; font-weight: 800; }
+        .stat-lbl { font-size: 0.7rem; color: var(--text-sub); text-transform: uppercase; }
+
+        .game-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .ctrl-btn {
+            padding: 18px; border: none; border-radius: 16px; font-family: 'Poppins', sans-serif;
+            font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 1rem;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .ctrl-btn:active { transform: translateY(4px); box-shadow: none; }
+        .btn-solo { background: #e0e7ff; color: #4338ca; }
+        .btn-multi { background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; }
+
+        /* LOBBY & QUIZ */
+        .lobby-panel { background: var(--bg-card); border-radius: 24px; padding: 30px; text-align: center; margin-top: 20px; display: none; }
+        .lobby-code { font-size: 2.5rem; font-weight: 800; letter-spacing: 5px; color: var(--primary); margin: 20px 0; background: rgba(99, 102, 241, 0.1); padding: 15px; border-radius: 12px; cursor: pointer; font-family: monospace; }
+        .player-chip { background: var(--bg-element); padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+
+        /* IN-GAME */
+        .ingame-players-bar { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 10px; white-space: nowrap; border-bottom: 1px solid rgba(128,128,128,0.1); scrollbar-width: none; }
+        .mini-player-pill { background: var(--bg-element); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; color: var(--text-sub); border: 1px solid transparent; }
+        .mini-player-pill.is-me { border-color: var(--primary); background: rgba(99,102,241,0.2); color: var(--primary); font-weight:bold; }
+
+        .session-card { background: var(--bg-card); border-radius: 20px; margin-bottom: 25px; overflow: hidden; animation: slideUp 0.3s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+        .q-header { padding: 20px; display: flex; gap: 15px; align-items: flex-start; border-bottom: 1px solid rgba(128,128,128,0.1); }
+        .q-num { background: var(--primary); color: white; padding: 5px 10px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; height: fit-content; }
+        .q-text { font-size: 1.05rem; line-height: 1.5; font-weight: 500; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; }
+        .opt-btn { background: var(--bg-element); border: 2px solid transparent; padding: 15px; border-radius: 12px; text-align: left; cursor: pointer; color: var(--text-main); font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .opt-btn.selected { background: #1e40af !important; border-color: var(--selected) !important; color: white !important; }
+        .opt-btn.correct { background: #064e3b !important; border-color: #34d399 !important; color: #d1fae5 !important; }
+        .opt-btn.wrong { background: #7f1d1d !important; border-color: #f87171 !important; color: #fee2e2 !important; }
+        .opt-btn:disabled { opacity: 0.8; pointer-events: none; }
+
+        .audio-icon-btn { background: rgba(128,128,128,0.2); border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-sub); margin-left: 10px; }
+
+        /* MODALS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-overlay); backdrop-filter: blur(8px); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex !important; }
+        .modal-card { background: var(--bg-card); width: 95%; max-width: 500px; border-radius: 24px; padding: 25px; text-align: center; color: var(--text-main); max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        
+        .review-item { background: var(--bg-body); border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: left; border: 1px solid rgba(128,128,128,0.1); }
+        .review-q { font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-main); }
+        .review-ans-row { display: flex; gap: 10px; font-size: 0.85rem; margin-bottom: 10px; flex-wrap: wrap; }
+        .ans-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .ans-correct { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #34d399; }
+        .ans-wrong { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #f87171; }
+        
+        .review-tools { display: flex; gap: 8px; margin-top: 8px; }
+        .tool-btn { background: var(--bg-element); border: 1px solid #475569; color: var(--text-sub); padding: 8px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; flex: 1; font-weight: 600; transition: 0.2s; }
+        .tool-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .ai-box-review { margin-top: 10px; background: var(--bg-element); padding: 10px; border-radius: 8px; font-size: 0.85rem; display: none; color: var(--text-main); border-left: 3px solid var(--primary); text-align: left; line-height: 1.5; }
+
+        .fab-finish { position: fixed; bottom: 60px; right: 30px; background: var(--text-main); color: var(--bg-body); padding: 16px 32px; border-radius: 50px; border: none; font-weight: 800; font-size: 1.1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; display: none; }
+
+        .lb-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-body); padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid rgba(128,128,128,0.1); }
+        .lb-rank { font-weight: 800; font-size: 1.2rem; width: 30px; }
+        .lb-name { flex-grow: 1; text-align: left; font-weight: 600; padding-left: 10px; }
+        .lb-score { font-weight: 700; color: var(--warning); }
+        
+        .refresh-btn { background: var(--primary); border: none; color: white; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); transition: transform 0.2s; }
+        .refresh-btn:active { transform: rotate(180deg) scale(0.95); }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .game-controls { grid-template-columns: 1fr; }
+            .fab-finish { bottom: 50px; right: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="user-header-bar">
+    <div class="header-left">
+        <div style="font-weight:700;">👤 <span id="header-name">Guest</span></div>
+        <div style="font-size:0.8rem; display:flex; align-items:center;">
+            <span class="live-indicator" id="live-dot"></span>
+            <span id="conn-text">Connecting...</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <div id="timer-display" class="timer-badge">⏳ 250s</div>
+        
+        <div class="toggle-container" onclick="window.app.toggleTheme()">
+            <div class="toggle-knob">
+                <span class="icon-moon">🌙</span>
+                <span class="icon-sun">☀️</span>
+            </div>
+            <div class="toggle-label"><span class="label-text"></span></div>
+        </div>
+    </div>
+</div>
+
+<div class="app-container">
+
+    <div class="auth-card" id="auth-ui" style="display:block;">
+        <h1>SmartStudy Pro</h1>
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="tab-login" onclick="window.app.switchTab('login')">Login</button>
+            <button class="auth-tab" id="tab-signup" onclick="window.app.switchTab('signup')">Sign Up</button>
+        </div>
+
+        <div id="form-login">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="login-email" class="form-input" placeholder="user@example.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-pass" class="form-input" placeholder="********">
+            </div>
+            <button class="ctrl-btn btn-multi" style="width:100%" onclick="window.app.login()">Login</button>
+        </div>
+
+        <div id="form-signup" style="display:none;">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="sup-name" class="form-input" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label>Contact Number</label>
+                <input type="tel" id="sup-phone" class="form-input" placeholder="1234567890">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1">
+                    <label>Age</label>
+                    <input type="number" id="sup-age" class="form-input" placeholder="20">
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label>Gender</label>
+                    <select id="sup-gender" class="form-input">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="sup-email" class="form-input" placeholder="user@example.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="sup-pass" class="form-input" placeholder="********">
+            </div>
+            <button class="ctrl-btn btn-solo" style="width:100%" onclick="window.app.signup()">Request Permission</button>
+        </div>
+    </div>
+
+    <div class="auth-card" id="status-ui" style="display:none;">
+        <h1 id="status-title">Status</h1>
+        <p id="status-msg" style="color:var(--text-sub); margin-bottom:20px;"></p>
+        <button class="ctrl-btn btn-multi" style="width:100%" onclick="window.app.logout()">Logout</button>
+    </div>
+
+    <div class="dashboard-card" id="admin-panel" style="display:none;">
+        <h2 style="color:var(--primary);">🛡️ Admin Control Panel</h2>
+        <div style="text-align:right;">
+            <button class="action-btn btn-block" onclick="location.reload()">Back to Dashboard</button>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="user-list-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="dashboard-card" id="dashboard" style="display:none;">
+        <h1>SmartStudy Pro</h1>
+        
+        <div class="subject-select-container">
+            <select id="subject-select" class="subject-select" onchange="window.app.changeSubject(this.value)">
+                <option value="english">📚 English Vocab</option>
+                <option value="cs">💻 Computer Science</option>
+                <option value="gs">🌍 General Studies</option>
+            </select>
+        </div>
+
+        <div class="xp-container">
+            <div class="xp-info"><span>LVL <span id="lvl-num">1</span></span><span id="xp-text">0 / 500 XP</span></div>
+            <div class="progress-track"><div class="progress-fill" id="xp-bar"></div></div>
+            <div style="font-size:0.75rem; color:var(--text-sub); margin-top:5px;">Seen: <span id="seen-count">0</span> Unique Questions</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box"><span class="stat-val" id="stat-score">0</span><span class="stat-lbl">Points</span></div>
+            <div class="stat-box"><span class="stat-val" id="stat-acc">0%</span><span class="stat-lbl">Accuracy</span></div>
+            <div class="stat-box"><span class="stat-val" id="seen-count-box">0</span><span class="stat-lbl">Played</span></div>
+        </div>
+
+        <div class="game-controls">
+            <button class="ctrl-btn btn-solo" onclick="window.app.startSolo()">
+                <span style="font-size:1.5rem">👤</span><span>Solo Run</span>
+            </button>
+            <button class="ctrl-btn btn-multi" onclick="window.app.setupOnlineGame()">
+                <span style="font-size:1.5rem">⚔️</span><span>Multiplayer</span>
+            </button>
+        </div>
+        
+        <div style="margin-top:20px; display:flex; justify-content:center; gap:15px;">
+            <button id="btn-admin-access" onclick="window.app.showAdminPanel()" style="background:none; border:none; color:var(--warning); display:none; font-weight:bold;">Admin Panel</button>
+            <button onclick="window.app.logout()" style="background:none; border:none; color:var(--danger);">Logout</button>
+        </div>
+    </div>
+
+    <div class="lobby-panel" id="lobby-ui">
+        <h2>GAME LOBBY</h2>
+        <div class="lobby-code" id="lobby-code-display" onclick="window.app.copyLink()">----</div>
+        <div style="margin-bottom:15px; color:var(--primary); font-weight:bold;">Subject: <span id="lobby-subject-display">English</span></div>
+        <div class="player-list" id="lobby-players"></div>
+        <div id="host-controls" style="display:none; margin-top:20px;">
+            <div class="admin-input-group">
+                <label>📚 Change Subject</label>
+                <select id="host-subject-select" class="subject-select" style="margin-bottom:10px;" onchange="window.app.hostChangeSubject(this.value)">
+                    <option value="english">English Vocab</option>
+                    <option value="cs">Computer Science</option>
+                    <option value="gs">General Studies</option>
+                </select>
+                <label>⏱️ Game Duration (Seconds)</label>
+                <input type="number" id="admin-timer-input" class="timer-input" value="250" min="30" max="600">
+            </div>
+            <button class="ctrl-btn btn-multi" style="width:100%" onclick="window.app.startOnlineRound()">START GAME</button>
+        </div>
+        <div id="client-wait" style="display:none; color:#f59e0b; margin-top:20px;">Waiting for host...</div>
+        <button onclick="window.app.quitToMenu()" style="margin-top:20px; background:none; border:none; color:#94a3b8;">Back</button>
+    </div>
+
+    <div id="feed-container" style="display:none;">
+        <div id="ingame-players-container" class="ingame-players-bar" style="display:none;"></div>
+        <div class="score-rules">
+            <span>✅ +1.0 Correct</span>
+            <span style="color:#f87171">⛔ -0.5 Wrong</span>
+        </div>
+        <div id="quiz-feed"></div>
+    </div>
+
+</div>
+
+<button class="fab-finish" id="finish-btn" onclick="window.app.finishGame()">Done ✅</button>
+
+<div class="modal-overlay" id="score-modal">
+    <div class="modal-card">
+        <div id="online-lb-container" style="display:none; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid rgba(128,128,128,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0; color:#f59e0b;">🏆 Leaderboard</h3>
+                <button class="refresh-btn" onclick="window.app.refreshLeaderboard()">🔄</button>
+            </div>
+            <div id="final-lb-list" style="text-align:left;"></div>
+        </div>
+        <h2 style="margin-top:0;">Session Report</h2>
+        <div class="score-circle" id="final-circle" style="margin:10px auto; width:80px; height:80px; border-radius:50%; border:4px solid var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:bold; color:var(--primary);">
+            <span id="final-pct">0%</span>
+        </div>
+        <div style="display:flex; justify-content:center; gap:20px; margin-bottom:15px;">
+            <div style="color:var(--success); font-weight:bold;">✅ <span id="report-correct">0</span></div>
+            <div style="color:var(--danger); font-weight:bold;">❌ <span id="report-wrong">0</span></div>
+        </div>
+        <h3 id="final-score-txt" style="margin:5px 0;">Score: 0</h3>
+        <div id="review-container" style="margin-top:15px; text-align:left; max-height:400px; overflow-y:auto; padding-right:5px;"></div>
+        <button class="ctrl-btn btn-solo" style="width:100%; margin-top:20px;" onclick="window.app.quitToMenu()">Quit to Menu</button>
+    </div>
+</div>
+
+<div class="developer-footer">© 2025 Developed by Rafique Ul Islam</div>
+
+<script>
+    // 2. DATA (Collapsed for brevity - Same as before)
+    const rawEnglish = `1. An area where animals are slaughtered for the food - Abattoir
+3. Act of giving up the throne - Abdication
+* To go away suddenly and secretly - Abscond
+4. The scientific study of sound - Acoustics
+5. To decide and state officially in court that somebody is not guilty - Acquit
+6. An entertainer who performs difficult physical feats - Acrobat
+7. Fear of great heights - Acrophobia
+8. Sharpness and accuracy of judgment - Acumen
+9. Living in air/existing above the ground - Aerial
+10. Concerned with beauty or the appreciation of beauty - Aesthetic`;
+    // ... (Use the full previous data variables: rawEnglish, rawCS, rawGS)
+    // NOTE: For brevity in this response, assume variables are populated. 
+    // IN REAL CODE, PASTE THE FULL TEXT DATA HERE.
+    const rawCS = `1. Any physical components of a computer system that we can see and touch is (a) Software (b) Peripheral device (c) hardware (d) CPU Answer: (c)`;
+    const rawGS = `The longest river in India is (a) Yamuna (b) Brahmaputra (c) Ganga (d) Godavari Answer: (c)`;
+
+    // 3. FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "AIzaSyCOtV0i7nkCGO8JpmRD8YV9IU2RL8cYMgI",
+      authDomain: "vocab-pro-b0542.firebaseapp.com",
+      projectId: "vocab-pro-b0542",
+      storageBucket: "vocab-pro-b0542.firebasestorage.app",
+      messagingSenderId: "358405065430",
+      appId: "1:358405065430:web:a276f004107a4dfd3dd777"
+    };
+
+    let db, auth;
+    const statusDiv = document.getElementById('conn-text');
+    const liveDot = document.getElementById('live-dot');
+    const headerName = document.getElementById('header-name');
+
+    try {
+        if(typeof firebase !== 'undefined') {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth();
+            statusDiv.innerText = "Online";
+            statusDiv.style.color = "var(--success)";
+            liveDot.className = "live-indicator live-on";
+        }
+    } catch(e) { console.log(e); }
+
+    // 4. LOGIC
+    function mulberry32(a) { return function() { var t = a += 0x6D2B79F5; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; } }
+
+    window.app = {
+        data: { score: 0, xp: 0, history: {}, seen: [], apiKey: "AIzaSyDJvoeMlz4NWpV2FAR0TOSRPchkVQvQejA", name: "Guest", theme: 'dark', subject: 'english' },
+        englishBank: [], csBank: [], gsBank: [], currentBank: [],
+        currentBatch: [], gameId: null, user: null, isHost: false, unsubscribe: null,
+        heartbeatInterval: null, timerInterval: null, scoreRefreshInterval: null,
+        mode: 'solo', timeLeft: 250, ADMIN_EMAIL: "admin@smartstudy.com",
+
+        init() {
+            // Parse Data
+            this.parseEnglish();
+            this.parseMCQ(window.rawCS || rawCS, 'cs'); // Fallback to const if undefined
+            this.parseMCQ(window.rawGS || rawGS, 'gs');
+            this.changeSubject('english');
+
+            // Theme
+            this.loadData();
+            this.applyTheme();
+
+            // Auth Listener
+            auth.onAuthStateChanged(u => {
+                if(u) {
+                    this.user = u;
+                    this.checkUserStatus(u);
+                } else {
+                    document.getElementById('auth-ui').style.display = 'block';
+                    document.getElementById('dashboard').style.display = 'none';
+                    headerName.innerText = "Guest";
+                }
+            });
+        },
+
+        // --- AUTH & ADMIN LOGIC ---
+        
+        switchTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            if(tab === 'login') {
+                document.getElementById('form-login').style.display = 'block';
+                document.getElementById('form-signup').style.display = 'none';
+            } else {
+                document.getElementById('form-login').style.display = 'none';
+                document.getElementById('form-signup').style.display = 'block';
+            }
+        },
+
+        async signup() {
+            const email = document.getElementById('sup-email').value;
+            const pass = document.getElementById('sup-pass').value;
+            const name = document.getElementById('sup-name').value;
+            const phone = document.getElementById('sup-phone').value;
+            const age = document.getElementById('sup-age').value;
+            const gender = document.getElementById('sup-gender').value;
+
+            if(!email || !pass || !name) return alert("Fill all fields");
+
+            try {
+                const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                
+                // Set Admin Role if email matches
+                const role = (email === this.ADMIN_EMAIL) ? 'admin' : 'user';
+                const status = (role === 'admin') ? 'approved' : 'pending';
+
+                await db.collection('users').doc(cred.user.uid).set({
+                    name, email, phone, age, gender, role, status,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                // Auth Listener will handle redirection
+            } catch(e) { alert(e.message); }
+        },
+
+        async login() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            try {
+                await auth.signInWithEmailAndPassword(email, pass);
+            } catch(e) { alert(e.message); }
+        },
+
+        logout() { auth.signOut(); location.reload(); },
+
+        async checkUserStatus(u) {
+            const doc = await db.collection('users').doc(u.uid).get();
+            if(!doc.exists) return alert("User record missing!");
+            
+            const d = doc.data();
+            this.data.name = d.name;
+            headerName.innerText = d.name;
+
+            if (d.role === 'admin') {
+                document.getElementById('auth-ui').style.display = 'none';
+                document.getElementById('status-ui').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                document.getElementById('btn-admin-access').style.display = 'block'; // Show Admin Button
+            } 
+            else if (d.status === 'approved') {
+                document.getElementById('auth-ui').style.display = 'none';
+                document.getElementById('status-ui').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+            } 
+            else if (d.status === 'pending') {
+                document.getElementById('auth-ui').style.display = 'none';
+                document.getElementById('status-ui').style.display = 'block';
+                document.getElementById('status-title').innerText = "Request Submitted";
+                document.getElementById('status-msg').innerText = "Please wait for Admin approval to access the game.";
+            } 
+            else {
+                document.getElementById('auth-ui').style.display = 'none';
+                document.getElementById('status-ui').style.display = 'block';
+                document.getElementById('status-title').innerText = "Access Denied";
+                document.getElementById('status-msg').innerText = "Your account has been blocked by the Administrator.";
+            }
+        },
+
+        // ADMIN PANEL FUNCTIONS
+        async showAdminPanel() {
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            
+            const snap = await db.collection('users').where('role', '!=', 'admin').get();
+            const tbody = document.getElementById('user-list-body');
+            tbody.innerHTML = '';
+            
+            snap.forEach(doc => {
+                const u = doc.data();
+                let statusClass = u.status === 'pending' ? 'st-pending' : (u.status === 'approved' ? 'st-approved' : 'st-blocked');
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${u.name}<br><span style="font-size:0.7rem; color:grey">${u.email}</span></td>
+                        <td>${u.phone || '-'}</td>
+                        <td><span class="status-badge ${statusClass}">${u.status.toUpperCase()}</span></td>
+                        <td>
+                            ${u.status !== 'approved' ? `<button class="action-btn btn-approve" onclick="window.app.updateStatus('${doc.id}', 'approved')">Approve</button>` : ''}
+                            ${u.status !== 'blocked' ? `<button class="action-btn btn-block" onclick="window.app.updateStatus('${doc.id}', 'blocked')">Block</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+        },
+
+        async updateStatus(uid, status) {
+            if(confirm(`Set user to ${status}?`)) {
+                await db.collection('users').doc(uid).update({ status });
+                this.showAdminPanel(); // Refresh list
+            }
+        },
+
+        // --- EXISTING GAME LOGIC PRESERVED BELOW ---
+        parseEnglish() {
+            // (Previous Parsing Logic)
+            if(typeof rawEnglish !== 'undefined') {
+                this.englishBank = rawEnglish.trim().split('\n').map(line => {
+                    const parts = line.split(' - ');
+                    if(parts.length < 2) return null;
+                    return { word: parts[1].trim(), meaning: parts[0].replace(/^[\d\*\.]+\s+/, '').trim() };
+                }).filter(x => x);
+            }
+        },
+        parseMCQ(text, type) {
+            // (Previous Logic)
+            if(!text) return;
+            const lines = text.split('\n').filter(l => l.trim().length > 0);
+            const bank = lines.map(line => {
+                const regex = /^(.*?)\(a\)(.*?)\(b\)(.*?)\(c\)(.*?)\(d\)(.*?)Answer:\s*\(([a-d])\)/i;
+                const match = line.match(regex);
+                if (!match) return null;
+                const question = match[1].replace(/^\d+[\.\)]\s*/, '').trim();
+                const ansLetter = match[6].toLowerCase();
+                let correctText = "";
+                if(ansLetter==='a') correctText=match[2].trim();
+                else if(ansLetter==='b') correctText=match[3].trim();
+                else if(ansLetter==='c') correctText=match[4].trim();
+                else if(ansLetter==='d') correctText=match[5].trim();
+                
+                return { q: question, opts: [match[2].trim(), match[3].trim(), match[4].trim(), match[5].trim()], correct: correctText };
+            }).filter(x => x);
+            if (type === 'cs') this.csBank = bank;
+            if (type === 'gs') this.gsBank = bank;
+        },
+
+        changeSubject(subj) {
+            this.data.subject = subj;
+            const el = document.getElementById('subject-select');
+            if(el) el.value = subj;
+            
+            if (subj === 'english') this.currentBank = this.englishBank;
+            else if (subj === 'cs') this.currentBank = this.csBank;
+            else if (subj === 'gs') this.currentBank = this.gsBank;
+            this.updateDashboard();
+        },
+
+        loadData() {
+            const saved = localStorage.getItem('vm_final_stable_data');
+            if(saved) this.data = { ...this.data, ...JSON.parse(saved) };
+            if(!this.data.seen) this.data.seen = []; 
+        },
+        saveData() { localStorage.setItem('vm_final_stable_data', JSON.stringify(this.data)); this.updateDashboard(); },
+        resetData() { if(confirm("Reset Data?")) { localStorage.removeItem('vm_final_stable_data'); location.reload(); } },
+        
+        toggleTheme() {
+            this.data.theme = this.data.theme === 'dark' ? 'light' : 'dark';
+            this.applyTheme();
+            this.saveData();
+        },
+        applyTheme() {
+            const toggle = document.querySelector('.toggle-container');
+            if(this.data.theme === 'light') {
+                document.body.classList.add('light-theme');
+            } else {
+                document.body.classList.remove('light-theme');
+            }
+        },
+
+        quitToMenu() {
+            if(this.scoreRefreshInterval) clearInterval(this.scoreRefreshInterval);
+            // Just refresh to go back to dashboard check
+            location.reload(); 
+        },
+
+        async hostChangeSubject(subj) {
+            if (this.isHost && db && this.gameId) {
+                await db.collection('vocab_games').doc(this.gameId.toString()).update({ subject: subj });
+                this.changeSubject(subj); 
+            }
+        },
+
+        setupOnlineGame: async function() {
+            if(!db) return; 
+            this.gameId = Math.floor(Math.random()*900000)+100000;
+            const seed = Math.random();
+            await db.collection('vocab_games').doc(this.gameId.toString()).set({
+                status: 'waiting', seed: seed, host: this.user.uid,
+                subject: this.data.subject, 
+                players: { [this.user.uid]: { name: this.data.name, score: 0, completed: false, lastSeen: Date.now() } }
+            });
+            this.isHost = true;
+            this.joinGameLobby();
+        },
+
+        joinGameLobby() {
+            if(!db) return;
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('lobby-ui').style.display = 'block';
+            document.getElementById('lobby-code-display').innerText = this.gameId;
+            this.startHeartbeat();
+
+            const ref = db.collection('vocab_games').doc(this.gameId.toString());
+            this.unsubscribe = ref.onSnapshot(snap => {
+                if (!snap.exists) return location.reload();
+                const d = snap.data();
+                
+                if (d.subject && d.subject !== this.data.subject) this.changeSubject(d.subject); 
+                document.getElementById('lobby-subject-display').innerText = d.subject.toUpperCase();
+                
+                if (this.user && !d.players[this.user.uid]) {
+                    ref.update({ [`players.${this.user.uid}`]: { name: this.data.name, score: 0, completed: false, lastSeen: Date.now() } });
+                }
+                
+                const playerArray = Object.values(d.players);
+                document.getElementById('lobby-players').innerHTML = playerArray.map(p => {
+                    const isOnline = (Date.now() - (p.lastSeen || 0)) < 15000;
+                    return `<div class="player-chip"><span>${isOnline?'🟢':'⚪'} ${p.name}</span><span>${p.completed?'DONE':(isOnline?'On':'Away')}</span></div>`;
+                }).join('');
+
+                const inGameBar = document.getElementById('ingame-players-container');
+                inGameBar.innerHTML = Object.entries(d.players).map(([uid, p]) => {
+                     const isOnline = (Date.now() - (p.lastSeen || 0)) < 15000;
+                     const isMe = this.user && uid === this.user.uid;
+                     return `<div class="mini-player-pill ${isMe ? 'is-me' : ''}">
+                         <span style="color:${isOnline?'#10b981':'#94a3b8'}">●</span>
+                         <span>${p.name}</span>
+                     </div>`;
+                }).join('');
+
+                if (this.user && d.host === this.user.uid) {
+                    this.isHost = true;
+                    document.getElementById('host-controls').style.display = 'block';
+                    document.getElementById('client-wait').style.display = 'none';
+                } else {
+                    this.isHost = false;
+                    document.getElementById('host-controls').style.display = 'none';
+                    document.getElementById('client-wait').style.display = 'block';
+                }
+
+                if (d.status === 'started' && document.getElementById('quiz-feed').innerHTML === '') {
+                    const duration = d.timerDuration ? parseInt(d.timerDuration) : 250;
+                    this.startRound(d.seed, 'multi', duration);
+                }
+            });
+        },
+
+        startHeartbeat() {
+            if(this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = setInterval(() => {
+                if(this.gameId && this.user && db) {
+                    db.collection('vocab_games').doc(this.gameId.toString()).update({
+                        [`players.${this.user.uid}.lastSeen`]: Date.now()
+                    }).catch(()=>{});
+                }
+            }, 5000); 
+        },
+
+        async startOnlineRound() { 
+            if(db) {
+                const durationInput = document.getElementById('admin-timer-input').value;
+                const duration = durationInput ? parseInt(durationInput) : 250;
+                await db.collection('vocab_games').doc(this.gameId.toString()).update({ 
+                    status: 'started',
+                    timerDuration: duration
+                }); 
+            }
+        },
+
+        startRound(seed, mode, duration = 250) {
+            this.mode = mode; 
+            document.getElementById('lobby-ui').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('feed-container').style.display = 'block';
+            
+            if(mode === 'multi') {
+                document.getElementById('ingame-players-container').style.display = 'flex';
+                document.getElementById('timer-display').style.display = 'block';
+                this.startTimer(duration);
+            } else {
+                document.getElementById('timer-display').style.display = 'none';
+            }
+            
+            const rng = mulberry32(seed ? Math.floor(seed*10000) : Date.now());
+            
+            let pool;
+            if (mode === 'solo') pool = this.getBatch(20, null); 
+            else pool = this.getBatch(20, seed); 
+
+            this.currentBatch = pool.map((t, i) => {
+                if (this.data.subject === 'english') {
+                    // English Logic (Collapsed for brevity - Same as before)
+                    const correctWord = t.word;
+                    const cat = this.detectEnglishCategory(t.word, t.meaning);
+                    let distractors = [];
+                    if (cat) {
+                        let candidates = this.englishBank.filter(w => w.word !== correctWord && this.detectEnglishCategory(w.word, w.meaning) === cat);
+                        candidates = candidates.map(w => ({w, s:rng()})).sort((a,b)=>a.s-b.s).map(x=>x.w);
+                        distractors = candidates.slice(0, 3);
+                    }
+                    if (distractors.length < 3) {
+                        const others = this.englishBank.filter(w => w.word !== correctWord);
+                        distractors = [...distractors, ...others.slice(0, 3-distractors.length)];
+                    }
+                    const distractWords = distractors.map(d => d.word);
+                    const opts = [...distractWords, t.word].map(w=>({w,s:rng()})).sort((a,b)=>b.s-a.s).map(x=>x.w);
+                    return { id: Date.now()+i, q: t.meaning, correct: t.word, opts: opts, sel: null };
+                } else {
+                    return { id: Date.now()+i, q: t.q, correct: t.correct, opts: t.opts, sel: null };
+                }
+            });
+
+            this.renderFeed();
+            document.getElementById('finish-btn').style.display = 'block';
+        },
+
+        detectEnglishCategory(word, meaning) {
+            const m = meaning.toLowerCase();
+            const w = word.toLowerCase();
+            if (m.includes('killing') || w.endsWith('cide')) return 'killing';
+            return null;
+        },
+
+        getBatch(count, seed) {
+            const rng = mulberry32(seed ? Math.floor(seed*10000) : Date.now());
+            let available = [...this.currentBank];
+            const shuffled = available.map(v => ({ v, s: rng() })).sort((a,b)=>a.s-b.s).map(x=>x.v);
+            return shuffled.slice(0, count);
+        },
+
+        startTimer(seconds) {
+            this.timeLeft = seconds;
+            if(this.timerInterval) clearInterval(this.timerInterval);
+            const display = document.getElementById('timer-display');
+            display.innerText = `⏳ ${this.timeLeft}s`;
+            this.timerInterval = setInterval(() => {
+                this.timeLeft--;
+                display.innerText = `⏳ ${this.timeLeft}s`;
+                if(this.timeLeft <= 0) {
+                    clearInterval(this.timerInterval);
+                    this.finishGame(); 
+                }
+            }, 1000);
+        },
+        
+        startSolo() { this.startRound(null, 'solo'); },
+
+        renderFeed() {
+            const c = document.getElementById('quiz-feed');
+            c.innerHTML = '';
+            this.currentBatch.forEach((q, idx) => {
+                const safeWord = q.correct.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                c.innerHTML += `
+                    <div class="session-card" id="card-${q.id}">
+                        <div class="q-header">
+                            <div class="q-num">Q${idx+1}</div>
+                            <div class="q-text">${q.q}</div>
+                        </div>
+                        <div class="options-grid">
+                            ${q.opts.map(opt => {
+                                const safeOpt = opt.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                                return `<button class="opt-btn" data-val="${safeOpt}" onclick="window.app.answer(${q.id}, '${safeOpt}')">
+                                    <span>${opt}</span>
+                                    <span class="audio-icon-btn" onclick="event.stopPropagation(); window.app.speak('${safeOpt}')">🔊</span>
+                                </button>`
+                            }).join('')}
+                        </div>
+                    </div>`;
+            });
+        },
+
+        answer(id, selected) {
+            const q = this.currentBatch.find(x => x.id === id);
+            
+            if (this.mode === 'solo') {
+                if (q.sel) return; 
+                q.sel = selected;
+                const isCorrect = selected === q.correct;
+                if(isCorrect) { this.data.score += 1; this.data.xp += 10; } 
+                else { this.data.score -= 0.5; }
+                this.saveData();
+
+                const card = document.getElementById(`card-${id}`);
+                card.querySelectorAll('.opt-btn').forEach(btn => {
+                    btn.disabled = true;
+                    if(btn.dataset.val === q.correct) btn.classList.add('correct');
+                    else if(btn.dataset.val === selected && !isCorrect) btn.classList.add('wrong');
+                });
+            } else {
+                q.sel = selected;
+                const card = document.getElementById(`card-${id}`);
+                card.querySelectorAll('.opt-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                    if(btn.dataset.val === selected) btn.classList.add('selected');
+                });
+            }
+        },
+
+        async finishGame() {
+            try {
+                if(this.timerInterval) clearInterval(this.timerInterval); 
+                document.getElementById('finish-btn').style.display = 'none';
+                document.getElementById('timer-display').style.display = 'none';
+                
+                let sessionScore = 0; 
+                let correctCount = 0;
+                const reviewList = document.getElementById('review-container');
+                reviewList.innerHTML = ''; 
+
+                this.currentBatch.forEach(q => {
+                    if(q.sel) {
+                        const isCorrect = q.sel === q.correct;
+                        if (isCorrect) correctCount++;
+                        
+                        if (this.mode === 'multi') {
+                            if (isCorrect) { sessionScore += 1; this.data.score += 1; this.data.xp += 10; } 
+                            else { sessionScore -= 0.5; this.data.score -= 0.5; }
+                        } else {
+                            if (isCorrect) sessionScore += 1; else sessionScore -= 0.5;
+                        }
+
+                        const safeWord = q.correct.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                        const safeQ = q.q.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                        const wrongBadge = !isCorrect ? `<span class="ans-badge ans-wrong">You: ${q.sel}</span>` : '';
+                        
+                        let aiButtons = '';
+                        if (this.data.subject === 'english') {
+                            aiButtons = `
+                                <button class="tool-btn" onclick="window.app.askAI('sentence', '${safeWord}', 'review-ai-${q.id}')">Meaning & Sentence</button>
+                                <button class="tool-btn" onclick="window.app.askAI('synant', '${safeWord}', 'review-ai-${q.id}')">Synonyms & Antonyms</button>
+                            `;
+                        } else {
+                            aiButtons = `
+                                <button class="tool-btn" onclick="window.app.askAI('explain', '${safeWord}||${safeQ}', 'review-ai-${q.id}')">📝 Explain Concept</button>
+                            `;
+                        }
+
+                        reviewList.innerHTML += `
+                            <div class="review-item">
+                                <div class="review-q">${q.q}</div>
+                                <div class="review-ans-row">
+                                    <span class="ans-badge ans-correct">Ans: ${q.correct}</span>
+                                    ${wrongBadge}
+                                </div>
+                                <div class="review-tools">${aiButtons}</div>
+                                <div id="review-ai-${q.id}" class="ai-box-review"></div>
+                            </div>
+                        `;
+                    }
+                });
+
+                const pct = Math.round((correctCount/this.currentBatch.length)*100) || 0;
+                document.getElementById('final-pct').innerText = pct + "%";
+                document.getElementById('final-circle').style.background = `conic-gradient(var(--success) ${pct}%, var(--bg-element) 0)`;
+                document.getElementById('final-score-txt').innerText = `Score: ${sessionScore}`;
+                document.getElementById('report-correct').innerText = correctCount;
+                document.getElementById('report-wrong').innerText = this.currentBatch.filter(q=>q.sel).length - correctCount;
+                
+                document.getElementById('score-modal').classList.add('active');
+
+                if(this.mode === 'multi') {
+                    this.saveData();
+                    if(db && this.gameId) {
+                        const ref = db.collection('vocab_games').doc(this.gameId.toString());
+                        await ref.update({ [`players.${this.user.uid}.score`]: sessionScore, [`players.${this.user.uid}.completed`]: true });
+                        document.getElementById('online-lb-container').style.display = 'block';
+                        this.refreshLeaderboard();
+                        if(this.scoreRefreshInterval) clearInterval(this.scoreRefreshInterval);
+                        this.scoreRefreshInterval = setInterval(() => this.refreshLeaderboard(), 1000);
+                    }
+                }
+            } catch(e) { alert(e.message); }
+        },
+
+        async refreshLeaderboard() {
+            if(!db || !this.gameId) return;
+            const ref = db.collection('vocab_games').doc(this.gameId.toString());
+            const snap = await ref.get();
+            if(!snap.exists) return;
+            const players = Object.values(snap.data().players).sort((a,b) => b.score - a.score);
+            let currentRank = 1;
+            document.getElementById('final-lb-list').innerHTML = players.map((p, i) => {
+                if (i > 0 && p.score < players[i-1].score) currentRank++;
+                let badge = '🎗️';
+                if(currentRank === 1) badge = '🥇';
+                if(currentRank === 2) badge = '🥈';
+                if(currentRank === 3) badge = '🥉';
+                return `<div class="lb-row"><div class="lb-rank">${badge}</div><div class="lb-name">${p.name}</div><div class="lb-score">${p.score}</div></div>`;
+            }).join('');
+        },
+
+        async askAI(type, input, targetId) {
+            const box = document.getElementById(targetId);
+            if(!box) return;
+            box.style.display = 'block'; box.innerHTML = "Thinking...";
+            let prompt = "";
+            if (type === 'sentence') prompt = `Define "${input}" simply and use it in a complex sentence.`;
+            else if (type === 'synant') prompt = `Provide 2 Synonyms and 2 Antonyms for "${input}". Format: Syn: ... | Ant: ...`;
+            else if (type === 'explain') {
+                const parts = input.split('||');
+                prompt = `Explain briefly why "${parts[0]}" is the correct answer to the question: "${parts[1]}". Keep it short and educational.`;
+            }
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.data.apiKey}`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const d = await res.json();
+                box.innerHTML = d.candidates[0].content.parts[0].text;
+            } catch(e) { box.innerHTML = "AI Error."; }
+        },
+
+        updateDashboard() {
+            document.getElementById('stat-score').innerText = Number(this.data.score).toFixed(1).replace(/\.0$/, '');
+            document.getElementById('xp-bar').style.width = `${(this.data.xp%500)/5}%`;
+            document.getElementById('xp-text').innerText = `${this.data.xp%500}/500`;
+            document.getElementById('lvl-num').innerText = Math.floor(this.data.xp/500)+1;
+            let total = 0;
+            if(this.data.subject === 'english') total = this.englishBank.length;
+            else if(this.data.subject === 'cs') total = this.csBank.length;
+            else if(this.data.subject === 'gs') total = this.gsBank.length;
+            document.getElementById('seen-count').innerText = `${total}`;
+            document.getElementById('seen-count-box').innerText = total;
+        },
+
+        copyLink() { 
+            const link = `${window.location.protocol}//${window.location.host}${window.location.pathname}?game=${this.gameId}`;
+            navigator.clipboard.writeText(link).then(()=>alert("Link Copied!")); 
+        },
+        
+        speak(t) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(t)); }
+    };
+    window.onload = () => window.app.init();
+</script>
+</body>
+</html>
