@@ -22,7 +22,7 @@
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
-            --gold: #ffd700; /* NEW GOLD COLOR FOR PRO */
+            --gold: #ffd700;
             --selected: #3b82f6;
             --modal-overlay: rgba(0, 0, 0, 0.85);
             
@@ -50,14 +50,16 @@
             background-color: var(--bg-body);
             color: var(--text-main);
             margin: 0; padding: 0;
-            display: flex; justify-content: center;
+            display: flex; 
+            flex-direction: column; /* CHANGED: Stacks content vertically (Header -> App -> Footer) */
+            align-items: center;    /* Centers content horizontally */
             min-height: 100vh;
             padding-top: 70px; 
-            padding-bottom: 140px; 
+            padding-bottom: 40px; 
             transition: background-color 0.3s, color 0.3s;
         }
 
-        .app-container { width: 100%; max-width: 700px; padding: 20px; box-sizing: border-box; }
+        .app-container { width: 100%; max-width: 700px; padding: 20px; box-sizing: border-box; flex: 1; }
 
         /* AUTH & ADMIN UI */
         .auth-card {
@@ -116,12 +118,12 @@
             background: linear-gradient(135deg, #ffd700, #f59e0b);
             color: black; padding: 2px 8px; border-radius: 4px;
             font-size: 0.7rem; font-weight: 800; margin-left: 5px;
-            display: none; /* Hidden by default */
+            display: none;
         }
 
         /* TOGGLE */
         .toggle-container {
-            width: 80px; height: 32px; /* Smaller toggle */
+            width: 80px; height: 32px;
             border-radius: 50px;
             position: relative;
             cursor: pointer;
@@ -171,6 +173,7 @@
         .stat-val { font-size: 1.4rem; font-weight: 800; }
         .stat-lbl { font-size: 0.7rem; color: var(--text-sub); text-transform: uppercase; }
 
+        /* CHANGED: Stacks on mobile, Side-by-Side on Desktop */
         .game-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .ctrl-btn {
             padding: 18px; border: none; border-radius: 16px; font-family: 'Poppins', sans-serif;
@@ -182,6 +185,7 @@
         .btn-solo { background: #e0e7ff; color: #4338ca; }
         .btn-multi { background: linear-gradient(135deg, #f59e0b, #ea580c); color: white; }
         .btn-pay { background: linear-gradient(135deg, #ffd700, #b45309); color: black; animation: pulse 2s infinite; }
+        .btn-direct-pay { background: #25D366; color: white; text-decoration: none; width: 100%; box-sizing: border-box; display: block; text-align: center; }
 
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
 
@@ -240,10 +244,21 @@
 
         .premium-locked-notice { padding: 20px; background: rgba(255, 215, 0, 0.1); border: 1px solid var(--gold); border-radius: 12px; color: var(--gold); font-weight: bold; margin-bottom: 20px; font-size: 0.9rem; }
         .qr-placeholder { background: white; padding: 15px; border-radius: 12px; display: inline-block; margin: 15px 0; }
+        
+        .developer-footer {
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+            color: var(--text-sub);
+            font-size: 0.8rem;
+            margin-top: auto; /* Keeps footer at bottom */
+        }
 
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             .options-grid { grid-template-columns: 1fr; }
+            /* CHANGED: Forces vertical stack on mobile/tablet */
             .game-controls { grid-template-columns: 1fr; }
+            .btn-pay { grid-column: auto; }
             .fab-finish { bottom: 50px; right: 20px; }
         }
     </style>
@@ -388,7 +403,7 @@
                 <span style="font-size:1.5rem">⚔️</span><span>Multiplayer</span>
             </button>
             <button class="ctrl-btn btn-pay" id="btn-upgrade-ui" onclick="window.app.showPaymentModal()" style="grid-column: span 2; display:none;">
-                <span style="font-size:1.5rem">🚀</span><span>Upgrade to PRO (₹99)</span>
+                <span style="font-size:1.5rem">🚀</span><span>Upgrade to PRO (₹9)</span>
             </button>
         </div>
         
@@ -406,8 +421,12 @@
             <div class="qr-placeholder">
                 <img id="upi-qr-img" src="" alt="Pay via UPI" width="180" height="180">
             </div>
+
+            <a id="pay-link-btn" class="ctrl-btn btn-direct-pay" style="margin-bottom:15px;" href="#" target="_blank">
+                ⚡ Pay via UPI App
+            </a>
             
-            <p style="font-size:1rem; font-weight:bold;">Amount: ₹99</p>
+            <p style="font-size:1rem; font-weight:bold;">Amount: ₹9</p>
             <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom:15px;">Scan with GPay, PhonePe, or Paytm</p>
 
             <div class="form-group">
@@ -482,7 +501,6 @@
 
 <script>
     // 1. DUMMY DATA (Normally this is your full list)
-    // IMPORTANT: In your real code, PASTE YOUR FULL DATA HERE
     const rawEnglish = `1. An area where animals are slaughtered for the food - Abattoir
 3. Act of giving up the throne - Abdication
 * To go away suddenly and secretly - Abscond
@@ -524,8 +542,8 @@
     // ******************************************************
     const UPI_CONFIG = {
         vpa: "iamrafique-1@okhdfcbank",  // REPLACE THIS with your UPI ID
-        name: "Rafiq Ul Islam",      // REPLACE THIS with your Name
-        amount: "99.00"
+        name: "Rafiq Ul Islam",       // REPLACE THIS with your Name
+        amount: "9.00" // CHANGED TO 9 RUPEES
     };
     // ******************************************************
 
@@ -614,7 +632,7 @@
 
                 await db.collection('users').doc(cred.user.uid).set({
                     name, email, phone, age, gender, role, status,
-                    premiumStatus: 'free', // Default to free
+                    premiumStatus: 'free', 
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             } catch(e) { alert(e.message); }
@@ -634,10 +652,9 @@
             
             const d = doc.data();
             this.data.name = d.name;
-            this.data.premiumStatus = d.premiumStatus || 'free'; // SYNC PREMIUM STATUS
+            this.data.premiumStatus = d.premiumStatus || 'free'; 
             headerName.innerText = d.name;
 
-            // Show Pro Badge if applicable
             if(this.data.premiumStatus === 'pro') {
                 document.getElementById('pro-badge').style.display = 'inline-block';
                 document.getElementById('free-tier-notice').style.display = 'none';
@@ -646,6 +663,10 @@
                 document.getElementById('pro-badge').style.display = 'none';
                 document.getElementById('free-tier-notice').style.display = 'block';
                 document.getElementById('btn-upgrade-ui').style.display = 'grid';
+                // CHANGED: Span 2 columns on desktop, auto on mobile
+                const btn = document.getElementById('btn-upgrade-ui');
+                if(window.innerWidth > 768) btn.style.gridColumn = "span 2";
+                else btn.style.gridColumn = "auto";
             }
 
             if (d.role === 'admin') {
@@ -660,7 +681,7 @@
             else {
                 this.showStatus('Access Denied', 'Your account has been blocked.');
             }
-            this.changeSubject(this.data.subject); // Reset bank based on status
+            this.changeSubject(this.data.subject); 
         },
 
         showDashboard(isAdmin) {
@@ -680,12 +701,13 @@
         // --- PAYMENT & PRO LOGIC ---
 
         showPaymentModal() {
-            // Generate UPI QR Code URL
             const upiUrl = `upi://pay?pa=${UPI_CONFIG.vpa}&pn=${encodeURIComponent(UPI_CONFIG.name)}&am=${UPI_CONFIG.amount}&cu=INR`;
-            // Generate QR Image using API
             const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
             
             document.getElementById('upi-qr-img').src = qrApi;
+            // ADDED: Set the direct payment link
+            document.getElementById('pay-link-btn').href = upiUrl;
+            
             document.getElementById('payment-modal').classList.add('active');
         },
 
@@ -719,11 +741,9 @@
                 let statusClass = u.status === 'pending' ? 'st-pending' : (u.status === 'approved' ? 'st-approved' : 'st-blocked');
                 let actions = '';
 
-                // Login Approval Logic
                 if(u.status !== 'approved') actions += `<button class="action-btn btn-approve" onclick="window.app.updateStatus('${doc.id}', 'approved')">Approve Login</button>`;
                 if(u.status !== 'blocked') actions += `<button class="action-btn btn-block" onclick="window.app.updateStatus('${doc.id}', 'blocked')">Block</button>`;
 
-                // Payment Approval Logic
                 if(u.premiumStatus === 'requested') {
                     actions += `<div style="margin-top:5px; border-top:1px solid #444; padding-top:5px;">
                         <div style="font-size:0.7rem; color:#ffd700;">Paid? UTR: ${u.transactionId}</div>
@@ -752,7 +772,7 @@
         },
 
         async grantPremium(uid) {
-            if(confirm("Confirm that you received ₹99 from this user?")) {
+            if(confirm("Confirm that you received ₹9 from this user?")) {
                 await db.collection('users').doc(uid).update({ premiumStatus: 'pro' });
                 this.showAdminPanel();
             }
@@ -799,13 +819,11 @@
             else if (subj === 'cs') fullBank = this.csBank;
             else if (subj === 'gs') fullBank = this.gsBank;
 
-            // *** LIMITATION LOGIC FOR FREE USERS ***
             if (this.data.premiumStatus !== 'pro') {
-                this.currentBank = fullBank.slice(0, 10); // ONLY TAKE FIRST 10
+                this.currentBank = fullBank.slice(0, 10); 
             } else {
-                this.currentBank = fullBank; // TAKE ALL
+                this.currentBank = fullBank; 
             }
-            // ***************************************
 
             this.updateDashboard();
         },
@@ -841,7 +859,6 @@
         },
 
         setupOnlineGame: async function() {
-            // PRO CHECK FOR MULTIPLAYER (OPTIONAL - CURRENTLY ALLOWED FOR ALL)
             if(!db) return; 
             this.gameId = Math.floor(Math.random()*900000)+100000;
             const seed = Math.random();
@@ -883,12 +900,12 @@
 
                 const inGameBar = document.getElementById('ingame-players-container');
                 inGameBar.innerHTML = Object.entries(d.players).map(([uid, p]) => {
-                     const isOnline = (Date.now() - (p.lastSeen || 0)) < 15000;
-                     const isMe = this.user && uid === this.user.uid;
-                     return `<div class="mini-player-pill ${isMe ? 'is-me' : ''}">
-                         <span style="color:${isOnline?'#10b981':'#94a3b8'}">●</span>
-                         <span>${p.name}</span>
-                     </div>`;
+                      const isOnline = (Date.now() - (p.lastSeen || 0)) < 15000;
+                      const isMe = this.user && uid === this.user.uid;
+                      return `<div class="mini-player-pill ${isMe ? 'is-me' : ''}">
+                          <span style="color:${isOnline?'#10b981':'#94a3b8'}">●</span>
+                          <span>${p.name}</span>
+                      </div>`;
                 }).join('');
 
                 if (this.user && d.host === this.user.uid) {
@@ -946,10 +963,9 @@
             
             const rng = mulberry32(seed ? Math.floor(seed*10000) : Date.now());
             
-            // USE this.currentBank WHICH IS ALREADY FILTERED BASED ON PRO STATUS
             let available = [...this.currentBank];
             const shuffled = available.map(v => ({ v, s: rng() })).sort((a,b)=>a.s-b.s).map(x=>x.v);
-            const pool = shuffled.slice(0, 20); // Max 20 questions per round
+            const pool = shuffled.slice(0, 20); 
 
             this.currentBatch = pool.map((t, i) => {
                 if (this.data.subject === 'english') {
@@ -1172,7 +1188,6 @@
             document.getElementById('xp-text').innerText = `${this.data.xp%500}/500`;
             document.getElementById('lvl-num').innerText = Math.floor(this.data.xp/500)+1;
             
-            // UPDATE COUNT BASED ON ACTIVE BANK
             document.getElementById('seen-count').innerText = `${this.currentBank.length}`;
             document.getElementById('seen-count-box').innerText = this.currentBank.length;
         },
